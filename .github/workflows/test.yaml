@@ -1,0 +1,57 @@
+name: Validate Pull Request (C++)
+
+on:
+  workflow_call:
+    inputs:
+      source_directory:
+        description: Source Directory
+        default: tether_sum
+        required: true
+        type: string
+      use-lockfile:
+        description: Use Existing Lockfile
+        default: false
+        required: false
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      source_directory:
+        description: Source Directory
+        required: true
+        default: tether_sum
+        type: string
+      use-lockfile:
+        description: Use Existing Lockfile
+        default: false
+        required: false
+        type: boolean
+
+jobs:
+  test:
+    name: Validate and Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ inputs.source_directory }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # needed for diff-based formatting checks
+
+      - name: Check Formatting
+        run: |
+          FILES=$(git ls-files '*.c' '*.cc' '*.cpp' '*.cxx' '*.h' '*.hh' '*.hpp' '*.hxx')
+          [ -z "$FILES" ] && exit 0
+          echo "$FILES" | xargs -r clang-format -style=LLVM -i
+          git diff --exit-code
+
+      - name: Setup Conan
+        uses: conan-io/setup-conan@v1
+
+      - name: Install Conan dependencies with lockfile
+        run: |
+          conan install . \
+            --build=missing \
+            ${{ inputs.use-lockfile && '--lockfile=conan.lock' || '# do not use a lockfile' }}

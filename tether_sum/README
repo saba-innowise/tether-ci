@@ -1,0 +1,95 @@
+# tether_sum
+
+A simple C++ library demonstrating Conan 2 packaging with CMake.
+
+## Overview
+
+This library provides a trivial `sum` function. The purpose is to demonstrate:
+- CMake-based C++ library structure
+- Conan 2 packaging
+- Unit testing with GoogleTest
+- CI/CD integration patterns
+
+## API
+
+```cpp
+#include <tether_sum/tether_sum.hpp>
+
+int result = tether::sum(2, 3);  // Returns 5
+```
+
+## Project Structure
+
+```
+tether_sum/
+├── conanfile.py          # Conan 2 recipe
+├── CMakeLists.txt        # Root CMake configuration
+├── cmake/
+│   └── TetherAddExecutable.cmake  # Helper module
+├── tether_sum/
+│   ├── CMakeLists.txt    # Library CMake config
+│   ├── include/
+│   │   └── tether_sum/
+│   │       ├── tether_sum.hpp  # Public API
+│   │       ├── export.hpp      # DLL export macros
+│   │       └── config.hpp      # Version info (generated)
+│   └── src/
+│       └── tether_sum.cpp      # Implementation
+└── tests/
+    ├── CMakeLists.txt          # Test configuration
+    └── tether_sum_test.cpp     # Unit tests
+```
+
+## Build Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `shared` | `True` | Build as shared/dynamic library |
+| `build_tests` | `False` | Build unit tests (requires GTest) |
+| `run_tests` | `False` | Run tests after build |
+
+## Quick Start
+
+### Using Conan (recommended)
+
+```bash
+# Build and install to local cache
+conan create . --build=missing
+
+# With tests
+conan create . -o build_tests=True -o run_tests=True --build=missing
+
+# Static library
+conan create . -o shared=False --build=missing
+```
+
+### Local Development
+
+```bash
+conan install . -o build_tests=True --build=missing
+cmake --preset conan-default
+cmake --build --preset conan-release
+ctest --preset conan-release --output-on-failure
+```
+
+### Legacy CMake (without Conan)
+
+```bash
+cmake -S . -B build -DTETHER_SUM_BUILD_SHARED=ON -DTETHER_SUM_BUILD_TESTS=ON
+cmake --build build --config Release
+ctest --test-dir build --output-on-failure
+cmake --install build --config Release --prefix=/path/to/install
+```
+
+## Consuming the Library
+
+After installation, use in your CMake project:
+
+```cmake
+find_package(tether_sum CONFIG REQUIRED)
+target_link_libraries(your_target PRIVATE tether_sum::tether_sum)
+```
+
+## License
+
+MIT
